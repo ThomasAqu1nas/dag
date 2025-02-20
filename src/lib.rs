@@ -75,9 +75,7 @@ impl TopologicalSort for DAG {
                 if let Some(pos) = node.sources.iter().position(|&src| src == node_id) {
                     node.sources.remove(pos);
                     if node.sources_len() == 0 {
-                        // Важно: чтобы не добавить вершину повторно, можно помечать уже добавленные.
-                        // Здесь, для простоты, полагаемся на тот факт, что вершина не появится в очереди,
-                        // если она уже была добавлена в отсортированный список.
+
                         if !sorted.contains(&other_id) && !queue.contains(&other_id) {
                             queue.push_back(other_id);
                         }
@@ -101,26 +99,18 @@ mod tests {
 
     #[test]
     fn test_topological_sort_acyclic() {
-        // Создаём ациклический DAG:
-        // 1: нет источников
-        // 2: источник 1
-        // 3: источник 1
-        // 4: источники 2 и 3
+
         let mut dag_acyclic = DAG::new();
         dag_acyclic.inner.insert(1, DagNode { sources: vec![] });
         dag_acyclic.inner.insert(2, DagNode { sources: vec![1] });
         dag_acyclic.inner.insert(3, DagNode { sources: vec![1] });
         dag_acyclic.inner.insert(4, DagNode { sources: vec![2, 3] });
 
-        // Функция sort должна вернуть Some(sorted_order)
+        // Must return Some(sorted_order)
         let sorted_option = dag_acyclic.sort();
         assert!(sorted_option.is_some(), "Ациклический граф должен быть отсортирован");
         let sorted = sorted_option.unwrap();
 
-        // Для проверки корректности сортировки убедимся, что
-        // для каждого ребра источник появляется раньше, чем цель.
-        // В данном графе должны выполняться следующие условия:
-        // 1 раньше 2, 1 раньше 3, 2 раньше 4, 3 раньше 4
         let pos = |node: u32| sorted.iter().position(|&n| n == node).unwrap();
         assert!(pos(1) < pos(2), "Вершина 1 должна идти раньше 2");
         assert!(pos(1) < pos(3), "Вершина 1 должна идти раньше 3");
@@ -130,17 +120,13 @@ mod tests {
 
     #[test]
     fn test_topological_sort_cyclic() {
-        // Создаём циклический DAG:
-        // 1: источник 3
-        // 2: источник 1
-        // 3: источник 2
-        // Таким образом, образуется цикл 1 -> 2 -> 3 -> 1
+
         let mut dag_cyclic = DAG::new();
         dag_cyclic.inner.insert(1, DagNode { sources: vec![3] });
         dag_cyclic.inner.insert(2, DagNode { sources: vec![1] });
         dag_cyclic.inner.insert(3, DagNode { sources: vec![2] });
 
-        // Функция sort должна вернуть None, так как граф содержит цикл
+
         let sorted_option = dag_cyclic.sort();
         assert!(sorted_option.is_none(), "Граф с циклом должен вернуть None");
     }
