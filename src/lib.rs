@@ -1,11 +1,12 @@
 use std::{collections::{BTreeMap, VecDeque}, error::Error};
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct DagNode {
+pub struct DagNode<T: Clone + PartialEq> {
     sources: Vec<u32>,
+    value: T
 }
 
-impl DagNode {
+impl<T: Clone + PartialEq> DagNode<T> {
     pub fn sources(&self) -> &Vec<u32> {
         &self.sources
     }
@@ -14,24 +15,24 @@ impl DagNode {
         self.sources.len()
     }
 
-    pub fn new(sources: Vec<u32>) -> Self {
-        Self { sources }
+    pub fn new(sources: Vec<u32>, value: T) -> Self {
+        Self { sources, value }
     }
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct DAG {
-    inner: BTreeMap<u32, DagNode>,
+pub struct DAG<T: Clone + PartialEq> {
+    inner: BTreeMap<u32, DagNode<T>>,
 }
 
-impl DAG {
+impl<T: Clone + PartialEq> DAG<T> {
     pub fn new() -> Self {
         Self {
             inner: BTreeMap::new(),
         }
     } 
 
-    pub fn add_node(&mut self, node_id: u32, node: DagNode) -> Result<Option<DagNode>, Box<dyn Error>> {
+    pub fn add_node(&mut self, node_id: u32, node: DagNode<T>) -> Result<Option<DagNode<T>>, Box<dyn Error>> {
         let mut cloned = self.clone();
         let prev = cloned.inner.insert(node_id, node);
     
@@ -55,7 +56,7 @@ pub trait TopologicalSort {
     fn sort(&self) -> Option<Vec<u32>>;
 }
 
-impl TopologicalSort for DAG {
+impl<T: Clone + PartialEq> TopologicalSort for DAG<T> {
     fn sort(&self) -> Option<Vec<u32>> {
         let mut inner = self.inner.clone();
 
@@ -101,10 +102,10 @@ mod tests {
     fn test_topological_sort_acyclic() {
 
         let mut dag_acyclic = DAG::new();
-        dag_acyclic.inner.insert(1, DagNode { sources: vec![] });
-        dag_acyclic.inner.insert(2, DagNode { sources: vec![1] });
-        dag_acyclic.inner.insert(3, DagNode { sources: vec![1] });
-        dag_acyclic.inner.insert(4, DagNode { sources: vec![2, 3] });
+        dag_acyclic.inner.insert(1, DagNode { sources: vec![], value: 0u32 });
+        dag_acyclic.inner.insert(2, DagNode { sources: vec![1], value: 0u32 });
+        dag_acyclic.inner.insert(3, DagNode { sources: vec![1], value: 0u32 });
+        dag_acyclic.inner.insert(4, DagNode { sources: vec![2, 3], value: 0u32 });
 
         // Must return Some(sorted_order)
         let sorted_option = dag_acyclic.sort();
@@ -122,9 +123,9 @@ mod tests {
     fn test_topological_sort_cyclic() {
 
         let mut dag_cyclic = DAG::new();
-        dag_cyclic.inner.insert(1, DagNode { sources: vec![3] });
-        dag_cyclic.inner.insert(2, DagNode { sources: vec![1] });
-        dag_cyclic.inner.insert(3, DagNode { sources: vec![2] });
+        dag_cyclic.inner.insert(1, DagNode { sources: vec![3], value: 0u32 });
+        dag_cyclic.inner.insert(2, DagNode { sources: vec![1], value: 0u32 });
+        dag_cyclic.inner.insert(3, DagNode { sources: vec![2], value: 0u32 });
 
 
         let sorted_option = dag_cyclic.sort();
