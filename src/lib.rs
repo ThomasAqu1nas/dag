@@ -48,6 +48,14 @@ impl<T: Clone + PartialEq> DAG<T> {
         self.inner.get(&node)
             .map(|node_sources| node_sources.sources().len())
     }
+
+    pub fn get_node(&self, key: u32) -> Option<&DagNode<T>> {
+        self.inner.get(&key)
+    }
+
+    pub fn inner(&self) -> &BTreeMap<u32, DagNode<T>> {
+        &self.inner
+    }
 }
 
 
