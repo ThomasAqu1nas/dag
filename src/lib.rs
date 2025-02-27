@@ -18,6 +18,10 @@ impl<T: Clone + PartialEq> DagNode<T> {
     pub fn new(sources: Vec<u32>, value: T) -> Self {
         Self { sources, value }
     }
+
+    pub fn value(&self) -> T {
+        self.value.clone()
+    }
 }
 
 #[derive(Debug, Clone, PartialEq)]
